@@ -1,0 +1,253 @@
+@import "tailwindcss";
+
+/* ── Warm Minimal Theme — Custom Properties ────────────────────── */
+
+@theme {
+  --color-background: #FAF3EC;
+  --color-surface: #FFFCF8;
+  --color-primary: #D9694A;
+  --color-secondary: #D98C7B;
+  --color-heading: #2D2A26;
+  --color-muted: #71695F;
+  --color-border: #EDE3D8;
+  --color-success: #7A9471;
+  --color-error: #C1584A;
+  --color-pass: #B8AFA3;
+
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --radius-card: 20px;
+  --radius-pill: 999px;
+  --radius-input: 12px;
+
+  --shadow-warm-sm: 0 2px 8px rgba(217, 105, 74, 0.08);
+  --shadow-warm: 0 4px 16px rgba(217, 105, 74, 0.1);
+  --shadow-warm-lg: 0 8px 32px rgba(217, 105, 74, 0.15);
+}
+
+/* ── Global Base ───────────────────────────────────────────────── */
+
+/* Keep defaults in Tailwind's base layer so utility spacing and typography win. */
+@layer base {
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-heading);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+}
+
+/* Page Containers */
+@layer components {
+.page-container {
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 24px;
+  padding-bottom: 32px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-container {
+    padding-left: 32px;
+    padding-right: 32px;
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+}
+
+.page-container-feed {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.page-container-profile {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .page-container {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+h1, h2, h3 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+
+@media (min-width: 768px) {
+  h1 { font-size: 2.75rem; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.5rem; }
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+}
+}
+
+/* ── Custom Scrollbar ──────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted);
+}
+
+/* ── Skeleton Shimmer ──────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    var(--color-surface) 50%,
+    var(--color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ── Badge Shimmer ─────────────────────────────────────────────── */
+
+@keyframes badge-shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.badge-shimmer-once {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: badge-shimmer 1.2s ease-in-out forwards;
+}
+
+/* ── Input base styles ─────────────────────────────────────────── */
+
+@layer base {
+input:not([type="checkbox"]):not([type="radio"]), textarea, select {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--color-heading);
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-input, 12px);
+  padding: 11px 15px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus, textarea:focus, select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(217, 105, 74, 0.15);
+}
+
+input:not([type="checkbox"]):not([type="radio"])::placeholder, textarea::placeholder {
+  color: var(--color-muted);
+}
+
+input[type="checkbox"], input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+}
+
+/* ── Toast overrides ───────────────────────────────────────────── */
+
+.toast-success {
+  background: var(--color-surface) !important;
+  border: 1.5px solid var(--color-success) !important;
+  color: var(--color-heading) !important;
+  border-radius: var(--radius-card) !important;
+  font-family: var(--font-sans) !important;
+}
+
+.toast-error {
+  background: var(--color-surface) !important;
+  border: 1.5px solid var(--color-error) !important;
+  color: var(--color-heading) !important;
+  border-radius: var(--radius-card) !important;
+  font-family: var(--font-sans) !important;
+}
