@@ -14,6 +14,7 @@ import {
 import { forumService } from '../../services/forumService';
 import { resolveMediaUrl } from '../../utils/media';
 import Button from '../ui/Button';
+import { compressImage } from '../../utils/imageCompression';
 
 function Avatar({ user }) {
   return user?.photos?.[0] ? (
@@ -36,6 +37,7 @@ export default function ProfilePosts({ userId, canCreate = false, initialPostId 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const fileRef = useRef(null);
   const openedInitialPostRef = useRef('');
 
@@ -51,7 +53,7 @@ export default function ProfilePosts({ userId, canCreate = false, initialPostId 
 
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
-  const chooseImage = (file) => {
+  const chooseImage = async (file) => {
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       toast.error('Choose a JPG, PNG, or WebP image');
@@ -61,9 +63,17 @@ export default function ProfilePosts({ userId, canCreate = false, initialPostId 
       toast.error('Image must be smaller than 5 MB');
       return;
     }
-    if (preview) URL.revokeObjectURL(preview);
-    setImage(file);
-    setPreview(URL.createObjectURL(file));
+    setCompressing(true);
+    try {
+      const compressed = await compressImage(file, { maxDimension: 1920, quality: 0.84 });
+      if (preview) URL.revokeObjectURL(preview);
+      setImage(compressed);
+      setPreview(URL.createObjectURL(compressed));
+    } catch (error) {
+      toast.error(error.message || 'Could not process this image');
+    } finally {
+      setCompressing(false);
+    }
   };
 
   const resetComposer = () => {
@@ -205,11 +215,11 @@ export default function ProfilePosts({ userId, canCreate = false, initialPostId 
             <motion.form initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} onSubmit={publish} className="w-full max-w-lg rounded-3xl border border-border bg-surface p-5 shadow-2xl sm:p-6">
               <div className="mb-4 flex items-center justify-between"><h3 className="font-serif text-xl font-bold">Create photo post</h3><button type="button" onClick={resetComposer} className="rounded-full p-2 hover:bg-background" aria-label="Close"><HiXMark size={20} /></button></div>
               <button type="button" onClick={() => fileRef.current?.click()} className="flex aspect-square max-h-[420px] w-full items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border bg-background">
-                {preview ? <img src={preview} alt="Post preview" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center text-sm font-semibold text-primary"><HiCamera size={32} className="mb-2" />Choose an image</span>}
+                {preview ? <img src={preview} alt="Post preview" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center text-sm font-semibold text-primary"><HiCamera size={32} className="mb-2" />{compressing ? 'Optimizing image…' : 'Choose an image'}</span>}
               </button>
               <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(event) => chooseImage(event.target.files?.[0])} />
               <textarea value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={2000} rows={3} placeholder="Write a caption…" className="mt-4 w-full rounded-2xl" />
-              <Button type="submit" fullWidth loading={submitting} disabled={!image} className="mt-4">Share post</Button>
+              <Button type="submit" fullWidth loading={submitting || compressing} disabled={!image || compressing} className="mt-4">Share post</Button>
             </motion.form>
           </div>
         )}

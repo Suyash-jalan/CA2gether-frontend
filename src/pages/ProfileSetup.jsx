@@ -8,6 +8,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import FilterChip from '../components/ui/FilterChip';
 import PageTransition from '../components/layout/PageTransition';
+import { compressImage } from '../utils/imageCompression';
 
 const STEPS = ['Basic Info', 'CA Status', 'Professional', 'Lifestyle', 'Exam History', 'Photos'];
 
@@ -22,6 +23,7 @@ export default function ProfileSetup() {
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
   const [photos, setPhotos] = useState([]);
+  const [compressingPhotos, setCompressingPhotos] = useState(false);
   const { refreshProfile } = useAuth();
   const navigate = useNavigate();
 
@@ -37,9 +39,16 @@ export default function ProfileSetup() {
   const nextStep = () => { setDirection(1); setStep((s) => Math.min(s + 1, STEPS.length - 1)); };
   const prevStep = () => { setDirection(-1); setStep((s) => Math.max(s - 1, 0)); };
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const files = Array.from(e.target.files).slice(0, 6);
-    setPhotos(files);
+    setCompressingPhotos(true);
+    try {
+      setPhotos(await Promise.all(files.map((file) => compressImage(file))));
+    } catch (error) {
+      toast.error(error.message || 'Could not process the selected photos');
+    } finally {
+      setCompressingPhotos(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -138,7 +147,8 @@ export default function ProfileSetup() {
       case 5: return (
         <div className="space-y-4">
           <p className="text-sm font-medium text-heading">Upload up to 6 photos</p>
-          <input type="file" accept="image/jpeg,image/png" multiple onChange={handlePhotoChange} className="text-sm" />
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handlePhotoChange} className="text-sm" />
+          {compressingPhotos && <p className="text-xs text-muted">Optimizing photos…</p>}
           {photos.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {photos.map((f, i) => (
@@ -199,7 +209,7 @@ export default function ProfileSetup() {
             {step < STEPS.length - 1 ? (
               <Button onClick={nextStep}>Next</Button>
             ) : (
-              <Button onClick={handleSubmit} loading={loading}>Complete Setup</Button>
+              <Button onClick={handleSubmit} loading={loading || compressingPhotos} disabled={compressingPhotos}>Complete Setup</Button>
             )}
           </div>
         </div>

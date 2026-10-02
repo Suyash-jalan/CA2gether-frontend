@@ -23,6 +23,7 @@ import { profileService } from '../services/profileService';
 import toast from 'react-hot-toast';
 import { resolveMediaUrl } from '../utils/media';
 import ProfilePosts from '../components/profile/ProfilePosts';
+import { compressImage } from '../utils/imageCompression';
 
 export default function Profile() {
   const { profile, refreshProfile } = useAuth();
@@ -53,6 +54,7 @@ export default function Profile() {
   };
 
   const handlePhotoUpload = async (e) => {
+    const input = e.target;
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
@@ -71,11 +73,11 @@ export default function Profile() {
     });
     if (!validFiles.length) return;
 
-    const formData = new FormData();
-    validFiles.forEach((file) => formData.append('photos', file));
-
     setUploading(true);
     try {
+      const compressedFiles = await Promise.all(validFiles.map((file) => compressImage(file)));
+      const formData = new FormData();
+      compressedFiles.forEach((file) => formData.append('photos', file));
       await profileService.uploadPhotos(formData);
       await refreshProfile();
       toast.success(`${validFiles.length} photo${validFiles.length > 1 ? 's' : ''} uploaded`, { className: 'toast-success' });
@@ -83,7 +85,7 @@ export default function Profile() {
       toast.error('Failed to upload photo', { className: 'toast-error' });
     } finally {
       setUploading(false);
-      e.target.value = '';
+      input.value = '';
     }
   };
 
