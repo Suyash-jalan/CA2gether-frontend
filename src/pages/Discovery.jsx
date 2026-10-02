@@ -165,8 +165,8 @@ export default function Discovery() {
 
   const activeExamBuddyMode = examBuddyMode ?? profile?.examBuddyMode ?? false;
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
+  const fetchUsers = useCallback(async ({ showLoader = true } = {}) => {
+    if (showLoader) setLoading(true);
     try {
       const params = { page, limit: 20, examBuddyMode: String(activeExamBuddyMode) };
       if (filters.city) params.city = filters.city;
@@ -178,7 +178,7 @@ export default function Discovery() {
     } catch {
       toast.error('Failed to load profiles', { className: 'toast-error' });
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }, [page, filters, activeExamBuddyMode]);
 
@@ -189,6 +189,10 @@ export default function Discovery() {
   const handleSwipe = async (action) => {
     if (users.length === 0 || swiping) return;
     const target = users[0];
+    const remainingUsers = users.slice(1);
+
+    // Advance the deck immediately instead of waiting for the network round trip.
+    setUsers(remainingUsers);
     setSwiping(true);
     try {
       const { data } = await matchService.swipe({
@@ -196,10 +200,15 @@ export default function Discovery() {
         action,
         mode: activeExamBuddyMode ? 'exam_buddy' : 'dating',
       });
-      setUsers((prev) => prev.filter((item) => item._id !== target._id));
       if (data.matched) setMatchModal(true);
-      if (users.length === 1) await fetchUsers();
+
+      // Refill quietly before the user reaches the end of the current deck.
+      if (remainingUsers.length <= 3) await fetchUsers({ showLoader: false });
     } catch {
+      // Restore the card when the server could not save the action.
+      setUsers((prev) => (
+        prev.some((item) => item._id === target._id) ? prev : [target, ...prev]
+      ));
       toast.error('Swipe action failed', { className: 'toast-error' });
     } finally {
       setSwiping(false);
