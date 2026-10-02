@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import {
   HiHeart,
@@ -158,10 +158,10 @@ export default function Discovery() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [examBuddyMode, setExamBuddyMode] = useState(null);
-  const [swiping, setSwiping] = useState(false);
   const [matchModal, setMatchModal] = useState(false);
   const [filters, setFilters] = useState({ city: '', caStatus: '', firmType: '', specialization: '' });
   const [page, setPage] = useState(1);
+  const pendingSwipeIds = useRef(new Set());
 
   const activeExamBuddyMode = examBuddyMode ?? profile?.examBuddyMode ?? false;
 
@@ -174,7 +174,7 @@ export default function Discovery() {
       if (filters.firmType) params.firmType = filters.firmType;
       if (filters.specialization) params.specialization = filters.specialization;
       const { data } = await matchService.discover(params);
-      setUsers(data.data || []);
+      setUsers((data.data || []).filter((user) => !pendingSwipeIds.current.has(user._id)));
     } catch {
       toast.error('Failed to load profiles', { className: 'toast-error' });
     } finally {
@@ -187,13 +187,15 @@ export default function Discovery() {
   }, [fetchUsers]);
 
   const handleSwipe = async (action) => {
-    if (users.length === 0 || swiping) return;
+    if (users.length === 0) return;
     const target = users[0];
+    if (pendingSwipeIds.current.has(target._id)) return;
+
     const remainingUsers = users.slice(1);
+    pendingSwipeIds.current.add(target._id);
 
     // Advance the deck immediately instead of waiting for the network round trip.
-    setUsers(remainingUsers);
-    setSwiping(true);
+    setUsers((prev) => prev.filter((item) => item._id !== target._id));
     try {
       const { data } = await matchService.swipe({
         targetUserId: target._id,
@@ -211,7 +213,7 @@ export default function Discovery() {
       ));
       toast.error('Swipe action failed', { className: 'toast-error' });
     } finally {
-      setSwiping(false);
+      pendingSwipeIds.current.delete(target._id);
     }
   };
 
@@ -400,7 +402,6 @@ export default function Discovery() {
                 type="button"
                 aria-label="Pass profile"
                 title="Pass"
-                disabled={swiping}
                 onClick={() => handleSwipe('pass')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -414,7 +415,6 @@ export default function Discovery() {
                 type="button"
                 aria-label="Like profile"
                 title="Like"
-                disabled={swiping}
                 onClick={() => handleSwipe('like')}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
