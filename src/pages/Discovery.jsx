@@ -10,7 +10,6 @@ import {
 import toast from 'react-hot-toast';
 import { matchService } from '../services/matchService';
 import Button from '../components/ui/Button';
-import Badge from '../components/ui/Badge';
 import FilterChip from '../components/ui/FilterChip';
 import SkeletonLoader from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
@@ -61,13 +60,6 @@ function SwipeCard({ user, onSwipe, onViewProfile, isTop }) {
               <span className="text-6xl font-serif font-bold text-primary/40">
                 {user.name?.[0] || 'CA'}
               </span>
-            </div>
-          )}
-
-          {/* Verification badge floating top-right on photo */}
-          {user.verificationStatus === 'verified' && (
-            <div className="absolute top-4 right-4 z-10 shadow-sm">
-              <Badge status="verified" text="ICAI Verified" />
             </div>
           )}
 

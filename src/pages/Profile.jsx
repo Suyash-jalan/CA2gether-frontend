@@ -239,7 +239,9 @@ export default function Profile() {
                   <HiMapPin size={14} className="text-primary" /> {profile.city}
                 </span>
               )}
-              <Badge status={profile.verificationStatus || 'pending'} />
+              {profile.verificationStatus !== 'verified' && (
+                <Badge status={profile.verificationStatus || 'pending'} />
+              )}
             </div>
 
             {/* Badges Row */}

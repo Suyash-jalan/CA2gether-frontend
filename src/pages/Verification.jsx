@@ -246,7 +246,7 @@ export default function Verification() {
             <div className="w-16 h-16 rounded-full bg-success/10 text-success flex items-center justify-center mx-auto">
               <HiShieldCheck size={36} />
             </div>
-            <h2 className="text-xl font-bold font-serif text-heading">You are ICAI Verified!</h2>
+            <h2 className="text-xl font-bold font-serif text-heading">Verification approved</h2>
             <p className="text-sm text-muted max-w-md mx-auto">
               Your profile carries the prestigious badge of authentic CA community membership. Thank you for keeping CA2gether genuine and trusted.
             </p>

@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiShieldCheck, HiHeart, HiChatBubbleLeftRight, HiUserGroup, HiAcademicCap, HiSparkles } from 'react-icons/hi2';
+import { HiHeart, HiChatBubbleLeftRight, HiUserGroup, HiAcademicCap, HiSparkles } from 'react-icons/hi2';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import PageTransition from '../components/layout/PageTransition';
 
 const features = [
-  { icon: HiShieldCheck, title: 'ICAI Verified', desc: 'Every member verifies their ICAI credentials — no fakes, only real CAs and students.' },
   { icon: HiHeart, title: 'CA Dating', desc: 'Find someone who truly understands your article-ship grind and exam season stress.' },
   { icon: HiAcademicCap, title: 'Exam Buddy', desc: 'Toggle Exam Buddy mode to find study partners, not dates — same level, same goals.' },
   { icon: HiChatBubbleLeftRight, title: 'Real-time Chat', desc: 'Match and chat instantly with CA-themed icebreaker prompts to break the silence.' },

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiShieldCheck, HiArrowLeft, HiSparkles } from 'react-icons/hi2';
+import { HiArrowLeft, HiSparkles } from 'react-icons/hi2';
 import PageTransition from './PageTransition';
 
 export default function AuthLayout({
@@ -45,17 +45,7 @@ export default function AuthLayout({
             <span>Back to home</span>
           </Link>
 
-          <div
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] sm:text-xs font-semibold text-primary shadow-xs"
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-primary)',
-            }}
-          >
-            <HiShieldCheck size={15} className="text-primary shrink-0" />
-            <span>ICAI Verified Community</span>
-          </div>
+          <div aria-hidden="true" className="w-8" />
         </header>
 
         {/* Center Main Card & Brand Identity */}

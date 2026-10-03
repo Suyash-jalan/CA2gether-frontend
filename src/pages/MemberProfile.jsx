@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { HiArrowLeft, HiMapPin, HiShieldCheck } from 'react-icons/hi2';
+import { HiArrowLeft, HiMapPin } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { profileService } from '../services/profileService';
 import { resolveMediaUrl } from '../utils/media';
@@ -54,7 +54,6 @@ export default function MemberProfile() {
           <div className="p-6 sm:p-8">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="font-serif text-3xl font-bold text-heading">{member.name}{member.age ? `, ${member.age}` : ''}</h1>
-              {member.verificationStatus === 'verified' && <HiShieldCheck className="text-success" size={22} title="ICAI verified" />}
             </div>
             {member.city && <p className="mt-2 flex items-center gap-1 text-sm text-muted"><HiMapPin className="text-primary" /> {member.city}</p>}
             <div className="mt-4 flex flex-wrap gap-2">{details.map((detail) => <Badge key={detail} text={detail} status="neutral" />)}</div>

@@ -7,7 +7,7 @@ const badgeConfig = {
     bg: 'bg-[#EBF5EA]',
     border: 'border-[#C3E4C0]',
     text: 'text-[#286333]',
-    label: 'ICAI Verified',
+    label: 'Verified',
   },
   pending: {
     icon: HiClock,
