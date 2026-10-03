@@ -9,6 +9,7 @@ import {
   HiChatBubbleLeftRight,
   HiMagnifyingGlass,
   HiSparkles,
+  HiPhoto,
 } from 'react-icons/hi2';
 import { chatService } from '../services/chatService';
 import { matchService } from '../services/matchService';
@@ -19,6 +20,7 @@ import SkeletonLoader from '../components/ui/SkeletonLoader';
 import EmptyState from '../components/ui/EmptyState';
 import PageTransition from '../components/layout/PageTransition';
 import { resolveMediaUrl } from '../utils/media';
+import { compressImage } from '../utils/imageCompression';
 
 function TypingIndicator() {
   return (
@@ -37,6 +39,8 @@ function TypingIndicator() {
 }
 
 function MessageBubble({ message, isOwn, index }) {
+  const isImage = message.type === 'image' && message.imageUrl;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -45,13 +49,23 @@ function MessageBubble({ message, isOwn, index }) {
       className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
     >
       <div
-        className={`max-w-[78%] sm:max-w-[70%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+        className={`max-w-[78%] sm:max-w-[70%] ${isImage ? 'p-1.5' : 'px-4 py-3'} rounded-2xl text-sm leading-relaxed shadow-sm ${
           isOwn
             ? 'bg-primary text-white rounded-br-xs'
             : 'bg-surface border border-border text-heading rounded-bl-xs'
         }`}
       >
-        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+        {isImage && (
+          <a href={resolveMediaUrl(message.imageUrl)} target="_blank" rel="noreferrer" className="block">
+            <img
+              src={resolveMediaUrl(message.imageUrl)}
+              alt="Shared in chat"
+              loading="lazy"
+              className="max-h-80 w-full rounded-xl object-cover"
+            />
+          </a>
+        )}
+        {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
         <div
           className={`text-[10px] mt-1 text-right font-medium ${
             isOwn ? 'text-white/70' : 'text-muted'
@@ -83,10 +97,18 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [typing, setTyping] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const imageInputRef = useRef(null);
+
+  const appendMessage = useCallback((message) => {
+    setMessages((current) => (
+      current.some((item) => item._id === message._id) ? current : [...current, message]
+    ));
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -150,7 +172,7 @@ export default function Chat() {
     socket.emit('join_chat', { matchId });
 
     socket.on('new_message', (msg) => {
-      setMessages((prev) => [...prev, msg]);
+      appendMessage(msg);
       setTyping(false);
     });
 
@@ -165,7 +187,7 @@ export default function Chat() {
       socket.off('user_stop_typing');
       socket.off('error_msg');
     };
-  }, [matchId, connect]);
+  }, [matchId, connect, appendMessage]);
 
   useEffect(() => {
     scrollToBottom();
@@ -186,6 +208,37 @@ export default function Chat() {
       typingTimeoutRef.current = setTimeout(() => {
         socketRef.current?.emit('stop_typing', { matchId });
       }, 2000);
+    }
+  };
+
+  const handleImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !matchId || uploadingImage) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Choose a JPG, PNG, or WebP image');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Choose an image smaller than 10 MB');
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const compressed = await compressImage(file, { maxDimension: 1280, quality: 0.78 });
+      if (compressed.size > 5 * 1024 * 1024) {
+        toast.error('The optimized image is still larger than 5 MB');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('image', compressed);
+      const { data } = await chatService.sendImage(matchId, formData);
+      appendMessage(data.data);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send image');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -438,6 +491,25 @@ export default function Chat() {
                   }}
                   className="flex items-center gap-2 max-w-4xl mx-auto"
                 >
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                  <motion.button
+                    type="button"
+                    aria-label="Send an image"
+                    title="Send an image"
+                    disabled={uploadingImage}
+                    onClick={() => imageInputRef.current?.click()}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-11 h-11 rounded-full border border-border bg-background text-primary flex items-center justify-center disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed shrink-0"
+                  >
+                    <HiPhoto size={20} className={uploadingImage ? 'animate-pulse' : ''} />
+                  </motion.button>
                   <input
                     value={input}
                     onChange={handleInputChange}
