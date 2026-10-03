@@ -60,7 +60,7 @@ export default function Navbar() {
         <div className="max-w-[1100px] mx-auto w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
           {/* Brand Logo aligned with page container */}
           <NavLink
-            to="/discover"
+            to="/"
             className="shrink-0 font-serif text-xl lg:text-2xl font-bold text-primary no-underline hover:no-underline tracking-tight flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
           >
             CA2gether
