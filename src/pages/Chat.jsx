@@ -56,13 +56,18 @@ function MessageBubble({ message, isOwn, index }) {
         }`}
       >
         {isImage && (
-          <a href={resolveMediaUrl(message.imageUrl)} target="_blank" rel="noreferrer" className="block">
+          <a href={resolveMediaUrl(message.imageUrl)} target="_blank" rel="noreferrer" className="relative block">
             <img
               src={resolveMediaUrl(message.imageUrl)}
               alt="Shared in chat"
               loading="lazy"
-              className="max-h-80 w-full rounded-xl object-cover"
+              className={`max-h-80 w-full rounded-xl object-cover ${message.pendingUpload ? 'opacity-70' : ''}`}
             />
+            {message.pendingUpload && (
+              <span className="absolute inset-x-2 bottom-2 rounded-full bg-black/60 px-2 py-1 text-center text-[10px] font-semibold text-white">
+                Sending…
+              </span>
+            )}
           </a>
         )}
         {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
@@ -105,9 +110,23 @@ export default function Chat() {
   const imageInputRef = useRef(null);
 
   const appendMessage = useCallback((message) => {
-    setMessages((current) => (
-      current.some((item) => item._id === message._id) ? current : [...current, message]
-    ));
+    setMessages((current) => {
+      if (current.some((item) => item._id === message._id)) return current;
+
+      const senderId = message.sender?._id || message.sender;
+      const pendingIndex = message.type === 'image' && senderId === user?.id
+        ? current.findIndex((item) => item.pendingUpload)
+        : -1;
+      if (pendingIndex === -1) return [...current, message];
+
+      const updated = [...current];
+      updated[pendingIndex] = message;
+      return updated;
+    });
+  }, [user?.id]);
+
+  const removeMessage = useCallback((messageId) => {
+    setMessages((current) => current.filter((item) => item._id !== messageId));
   }, []);
 
   const scrollToBottom = useCallback(() => {
@@ -224,10 +243,22 @@ export default function Chat() {
       return;
     }
 
+    const temporaryId = `upload-${Date.now()}`;
+    const previewUrl = URL.createObjectURL(file);
+    appendMessage({
+      _id: temporaryId,
+      match: matchId,
+      sender: { _id: user?.id },
+      type: 'image',
+      imageUrl: previewUrl,
+      createdAt: new Date().toISOString(),
+      pendingUpload: true,
+    });
     setUploadingImage(true);
     try {
-      const compressed = await compressImage(file, { maxDimension: 1280, quality: 0.78 });
+      const compressed = await compressImage(file, { maxDimension: 1080, quality: 0.75 });
       if (compressed.size > 5 * 1024 * 1024) {
+        removeMessage(temporaryId);
         toast.error('The optimized image is still larger than 5 MB');
         return;
       }
@@ -236,8 +267,10 @@ export default function Chat() {
       const { data } = await chatService.sendImage(matchId, formData);
       appendMessage(data.data);
     } catch (error) {
+      removeMessage(temporaryId);
       toast.error(error.response?.data?.message || 'Failed to send image');
     } finally {
+      URL.revokeObjectURL(previewUrl);
       setUploadingImage(false);
     }
   };
