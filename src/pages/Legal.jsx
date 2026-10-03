@@ -6,7 +6,7 @@ const content = {
     title: 'Terms of Service',
     intro: 'These terms explain the rules for using CA2gether and keeping the community safe.',
     sections: [
-      ['Eligibility', 'You must be at least 18 years old and provide accurate account information. Professional or ICAI verification badges may only be used by members whose credentials have been reviewed.'],
+      ['Eligibility', 'You must be at least 18 years old and provide accurate account information. Verification status is available only to members whose credentials have been reviewed.'],
       ['Community conduct', 'Treat members respectfully. Harassment, impersonation, fraud, unsolicited promotion, and sharing another person’s private information are prohibited.'],
       ['Your content', 'You remain responsible for the profile information, photos, messages, posts, and event details you submit. Do not upload content you do not have permission to use.'],
       ['Safety and moderation', 'CA2gether may restrict or remove content and accounts that breach these terms or create a safety risk. Use block and report tools whenever an interaction feels unsafe.'],

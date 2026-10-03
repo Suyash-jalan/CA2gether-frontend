@@ -50,7 +50,7 @@ export default function Notifications() {
         return { title: 'New message', message: data.preview || 'A connection sent you a message.' };
       case 'verification_update':
         return {
-          title: data.status === 'verified' ? 'ICAI verification approved' : 'Verification update',
+          title: data.status === 'verified' ? 'Verification approved' : 'Verification update',
           message: data.status === 'verified' ? 'Your verified badge is now active.' : data.reason || 'Review your verification status.',
         };
       case 'lounge_comment':

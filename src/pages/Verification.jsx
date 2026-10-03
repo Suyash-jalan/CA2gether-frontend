@@ -48,11 +48,11 @@ export default function Verification() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedFile) {
-      toast.error('Please select an ICAI document to upload');
+      toast.error('Please select a verification document to upload');
       return;
     }
     if (!icaiNumber.trim()) {
-      toast.error('Please provide your ICAI Roll or Membership Number');
+      toast.error('Please provide your CA registration or membership number');
       return;
     }
 
@@ -88,7 +88,7 @@ export default function Verification() {
           </button>
           <div>
             <h1 className="text-2xl font-serif font-bold text-heading">
-              ICAI Credential Verification
+              Verification
             </h1>
             <p className="text-sm text-muted">
               Fast-track your trust on CA2gether with an official verification badge
@@ -106,7 +106,7 @@ export default function Verification() {
               <div>
                 <h3 className="text-base font-semibold text-heading">Verification Status</h3>
                 <p className="text-xs text-muted">
-                  {verificationStatus === 'verified' && 'Your ICAI credentials have been validated.'}
+                  {verificationStatus === 'verified' && 'Your credentials have been validated.'}
                   {verificationStatus === 'pending' && 'Your documents are currently under review.'}
                   {verificationStatus === 'rejected' && 'Previous submission could not be verified. Please re-upload.'}
                   {verificationStatus === 'none' && 'You have not submitted verification documents yet.'}
@@ -142,7 +142,7 @@ export default function Verification() {
           <div className="text-xs text-muted leading-relaxed">
             <span className="font-semibold text-heading">Why get verified?</span>
             <ul className="list-disc pl-4 mt-1 space-y-0.5">
-              <li>Receive the exclusive golden ICAI badge on your profile</li>
+              <li>Show your verified status on your account</li>
               <li>Get prioritized discovery matching with fellow CAs and articles</li>
               <li>Unlock full community privileges in CA Lounge & Events</li>
               <li>Your sensitive documents are encrypted and kept strictly confidential</li>
@@ -156,7 +156,7 @@ export default function Verification() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-semibold text-heading mb-1">
-                  ICAI Membership / Student Registration Number (MRN / WRO / NRO / SRO / ERO)
+                  CA Membership / Student Registration Number (MRN / WRO / NRO / SRO / ERO)
                 </label>
                 <input
                   type="text"
@@ -176,10 +176,10 @@ export default function Verification() {
                   onChange={(e) => setDocType(e.target.value)}
                   className="w-full"
                 >
-                  <option value="icai_card">ICAI Student ID / Admit Card</option>
+                  <option value="icai_card">CA Student ID / Admit Card</option>
                   <option value="membership_certificate">CA Membership Certificate (COP / Associate)</option>
                   <option value="articleship_letter">Articleship Registration Letter (Form 102/103)</option>
-                  <option value="mark_sheet">ICAI Exam Result / Marks Statement</option>
+                  <option value="mark_sheet">CA Exam Result / Marks Statement</option>
                 </select>
               </div>
 

@@ -149,7 +149,7 @@ export default function AuthLayout({
         {/* Bottom Trust Badge */}
         <footer className="w-full max-w-md text-center mt-8 z-10">
           <p className="text-xs text-muted/80">
-            🔒 256-bit encrypted • ICAI credentials verified • Strictly confidential
+            🔒 256-bit encrypted • Credentials protected • Strictly confidential
           </p>
         </footer>
       </div>

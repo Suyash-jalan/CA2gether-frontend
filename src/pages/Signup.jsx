@@ -82,7 +82,7 @@ export default function Signup() {
     if (!form.icaiRegNumber.trim()) {
       errs.icaiRegNumber = 'CA registration number is required';
     } else if (!/^[A-Za-z0-9/ -]{4,30}$/.test(form.icaiRegNumber.trim())) {
-      errs.icaiRegNumber = 'Enter a valid ICAI registration or membership number';
+      errs.icaiRegNumber = 'Enter a valid CA registration or membership number';
     }
 
     // Password policy
@@ -243,7 +243,7 @@ export default function Signup() {
           </div>
 
           <Input
-            label="ICAI Registration Number"
+            label="CA Registration Number"
             id="signup-icai-registration"
             icon={HiIdentification}
             placeholder="e.g. SRO0123456"
@@ -400,7 +400,7 @@ export default function Signup() {
               >
                 Privacy Policy
               </Link>
-              . I confirm I am affiliated with ICAI as a student or qualified CA.
+              . I confirm that I am a CA student or qualified CA.
             </span>
           </label>
           {errors.agreed && (

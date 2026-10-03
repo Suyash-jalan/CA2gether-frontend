@@ -14,7 +14,7 @@ const features = [
 
 const steps = [
   { num: '01', title: 'Sign Up', desc: 'Create your account with email and set up your CA profile.' },
-  { num: '02', title: 'Verify ICAI', desc: 'Upload your ICAI registration document for verification.' },
+  { num: '02', title: 'Verification', desc: 'Upload your CA registration document for verification.' },
   { num: '03', title: 'Discover', desc: 'Browse verified CA profiles filtered by city, stage, and specialization.' },
   { num: '04', title: 'Connect', desc: 'Match, chat, and build meaningful connections in the CA community.' },
 ];
@@ -139,7 +139,7 @@ export default function Landing() {
                 }}
               >
                 The only dating &amp; networking app exclusively for Chartered Accountants and CA students.
-                ICAI-verified profiles. Zero fakes. 100% free.
+                Verified CA profiles. Zero fakes. 100% free.
               </p>
 
               <div

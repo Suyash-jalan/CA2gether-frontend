@@ -160,8 +160,8 @@ export default function Profile() {
 
             <button
               type="button"
-              title="ICAI Verification"
-              aria-label="ICAI Verification"
+              title="Verification"
+              aria-label="Verification"
               onClick={() => navigate('/verification')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-heading bg-background border border-border hover:border-success/50 hover:text-success transition-colors cursor-pointer"
             >

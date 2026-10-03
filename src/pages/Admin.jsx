@@ -146,7 +146,7 @@ export default function Admin() {
               <h1 className="text-2xl font-serif font-bold text-heading flex items-center gap-2">
                 <HiShieldCheck className="text-success" /> Admin Control Center
               </h1>
-              <p className="text-xs text-muted">Manage ICAI verifications, moderation reports, and platform integrity</p>
+              <p className="text-xs text-muted">Manage verifications, moderation reports, and platform integrity</p>
             </div>
           </div>
         </div>
