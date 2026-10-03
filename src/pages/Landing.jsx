@@ -8,7 +8,7 @@ import PageTransition from '../components/layout/PageTransition';
 const features = [
   { icon: HiHeart, title: 'CA Dating', desc: 'Find someone who truly understands your article-ship grind and exam season stress.' },
   { icon: HiAcademicCap, title: 'Exam Buddy', desc: 'Toggle Exam Buddy mode to find study partners, not dates — same level, same goals.' },
-  { icon: HiChatBubbleLeftRight, title: 'Real-time Chat', desc: 'Match and chat instantly with CA-themed icebreaker prompts to break the silence.' },
+  { icon: HiChatBubbleLeftRight, title: 'Real-time Chat', desc: 'Match and exchange messages instantly with people in the CA community.' },
   { icon: HiUserGroup, title: 'CA Lounge', desc: 'Join forum discussions, find local meet-ups, and network with fellow professionals.' },
 ];
 

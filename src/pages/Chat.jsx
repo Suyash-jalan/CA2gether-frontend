@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   HiPaperAirplane,
   HiArrowLeft,
-  HiLightBulb,
   HiEllipsisVertical,
   HiChatBubbleLeftRight,
   HiMagnifyingGlass,
@@ -84,8 +83,6 @@ export default function Chat() {
   const [input, setInput] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [typing, setTyping] = useState(false);
-  const [icebreakers, setIcebreakers] = useState([]);
-  const [showIcebreakers, setShowIcebreakers] = useState(false);
 
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
@@ -134,11 +131,6 @@ export default function Chat() {
       try {
         const { data } = await chatService.getMessages(matchId, { limit: 50 });
         setMessages(data.data || []);
-        if ((data.data || []).length === 0) {
-          const ib = await chatService.getIcebreakers(3);
-          setIcebreakers(ib.data.prompts || []);
-          setShowIcebreakers(true);
-        }
       } catch {
         toast.error('Failed to load messages', { className: 'toast-error' });
       } finally {
@@ -184,7 +176,6 @@ export default function Chat() {
     socketRef.current.emit('send_message', { matchId, content: input.trim() });
     socketRef.current.emit('stop_typing', { matchId });
     setInput('');
-    setShowIcebreakers(false);
   };
 
   const handleInputChange = (e) => {
@@ -196,11 +187,6 @@ export default function Chat() {
         socketRef.current?.emit('stop_typing', { matchId });
       }, 2000);
     }
-  };
-
-  const handleApplyIcebreaker = (prompt) => {
-    setInput(prompt);
-    setShowIcebreakers(false);
   };
 
   const filteredMatches = useMemo(() => {
@@ -424,7 +410,7 @@ export default function Chat() {
                       Say hello to {otherUser?.name || 'your match'}!
                     </h4>
                     <p className="text-muted text-xs max-w-xs mb-4">
-                      Break the ice with a thoughtful message or pick a suggestion below.
+                      Send a message to start the conversation.
                     </p>
                   </div>
                 ) : (
@@ -442,34 +428,6 @@ export default function Chat() {
                   </>
                 )}
               </div>
-
-              {/* Icebreaker Suggestions */}
-              <AnimatePresence>
-                {showIcebreakers && icebreakers.length > 0 && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden border-t border-border bg-surface/95 px-4 sm:px-6 py-2.5"
-                  >
-                    <p className="text-xs text-muted mb-2 flex items-center gap-1 font-medium">
-                      <HiLightBulb className="text-primary" /> CA Icebreaker ideas
-                    </p>
-                    <div className="flex gap-2 overflow-x-auto pb-1">
-                      {icebreakers.map((prompt, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => handleApplyIcebreaker(prompt)}
-                          className="shrink-0 px-3.5 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium rounded-full border border-primary/20 cursor-pointer transition-colors max-w-[280px] text-left truncate"
-                        >
-                          "{prompt}"
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
 
               {/* Input Bar */}
               <div className="p-3 sm:p-4 border-t border-border bg-surface">
