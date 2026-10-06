@@ -26,6 +26,7 @@ export default function Login() {
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [developmentResetUrl, setDevelopmentResetUrl] = useState('');
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -58,7 +59,12 @@ export default function Login() {
     }
     setForgotLoading(true);
     try {
-      await authService.forgotPassword({ email: forgotEmail.trim() });
+      const { data } = await authService.forgotPassword({ email: forgotEmail.trim() });
+      if (data.resetUrl) {
+        setDevelopmentResetUrl(data.resetUrl);
+        toast.success('Development reset link created.', { className: 'toast-success' });
+        return;
+      }
       setForgotModalOpen(false);
       toast.success('If an account exists for this email, reset instructions have been sent.', {
         duration: 5000,
@@ -130,6 +136,7 @@ export default function Login() {
               type="button"
               onClick={() => {
                 setForgotEmail(email);
+                setDevelopmentResetUrl('');
                 setForgotModalOpen(true);
               }}
               className="text-xs text-primary font-medium hover:underline bg-transparent border-0 p-0 cursor-pointer"
@@ -192,6 +199,20 @@ export default function Login() {
               </div>
 
               <form onSubmit={handleForgotPassword} className="space-y-4">
+                {developmentResetUrl ? (
+                  <div className="rounded-2xl border border-success/30 bg-success/10 p-4">
+                    <p className="text-sm font-semibold text-heading">Local reset link ready</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                      SMTP is unavailable locally, so use this one-time link to finish testing.
+                    </p>
+                    <a
+                      href={developmentResetUrl}
+                      className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white"
+                    >
+                      Choose a new password
+                    </a>
+                  </div>
+                ) : (
                 <Input
                   label="Registered Email"
                   type="email"
@@ -202,6 +223,7 @@ export default function Login() {
                   required
                   autoFocus
                 />
+                )}
 
                 <div className="flex gap-2.5 pt-2">
                   <Button
@@ -212,13 +234,15 @@ export default function Login() {
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    loading={forgotLoading}
-                  >
-                    Send Instructions
-                  </Button>
+                  {!developmentResetUrl && (
+                    <Button
+                      type="submit"
+                      className="flex-1"
+                      loading={forgotLoading}
+                    >
+                      Send Instructions
+                    </Button>
+                  )}
                 </div>
               </form>
             </motion.div>

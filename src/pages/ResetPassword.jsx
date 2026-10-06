@@ -8,6 +8,7 @@ import AuthLayout from '../components/layout/AuthLayout';
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
+  const token = params.get('token');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,6 @@ export default function ResetPassword() {
 
   const submit = async (event) => {
     event.preventDefault();
-    const token = params.get('token');
     if (!token) return toast.error('This reset link is incomplete.');
     if (password !== confirmPassword) return toast.error('Passwords do not match.');
     if (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
@@ -35,7 +35,12 @@ export default function ResetPassword() {
 
   return (
     <AuthLayout title="Choose a new password" subtitle="Use a strong password you do not reuse elsewhere" activeTab="">
-      {complete ? (
+      {!token ? (
+        <div className="text-center">
+          <p className="mb-6 text-sm text-muted">This password reset link is incomplete. Request a new link from the sign-in page.</p>
+          <Link to="/login"><Button fullWidth>Return to sign in</Button></Link>
+        </div>
+      ) : complete ? (
         <div className="text-center"><p className="mb-6 text-sm text-muted">Your password has been changed successfully.</p><Link to="/login"><Button fullWidth>Sign in</Button></Link></div>
       ) : (
         <form onSubmit={submit} className="space-y-4">
