@@ -22,6 +22,12 @@ import { useAuth } from '../hooks/useAuth';
 const CA_STATUSES = ['CA Foundation', 'CA Inter', 'CA Final', 'Articleship', 'Qualified CA'];
 const FIRM_TYPES = ['Big 4', 'Mid-size', 'Independent', 'Industry'];
 const SPECIALIZATIONS = ['Audit', 'Tax', 'GST', 'Valuation', 'CFO Track', 'Other'];
+const DATING_GENDER_SUMMARIES = {
+  Male: 'Women',
+  Female: 'Men',
+  'Non-binary': 'Women and non-binary people',
+  'Prefer not to say': 'All genders',
+};
 
 function SwipeCard({ user, onSwipe, onViewProfile, isTop }) {
   const x = useMotionValue(0);
@@ -280,6 +286,16 @@ export default function Discovery() {
                   )}
                 </div>
 
+                {/* Gender visibility is automatic and depends on the active mode. */}
+                <div>
+                  <p className="text-xs text-muted mb-1.5 font-medium">Gender</p>
+                  <div className="rounded-xl border border-border bg-background/60 px-3.5 py-2.5 text-sm text-heading">
+                    {activeExamBuddyMode
+                      ? 'All genders — Exam Buddy has no gender restrictions.'
+                      : `Showing ${DATING_GENDER_SUMMARIES[profile?.gender] || 'profiles allowed for your gender'} in Dating.`}
+                  </div>
+                </div>
+
                 {/* City Input */}
                 <div>
                   <label htmlFor="filter-city" className="text-xs text-muted mb-1.5 block font-medium">
@@ -358,9 +374,11 @@ export default function Discovery() {
           ) : users.length === 0 ? (
             <div className="w-full min-h-[460px] flex items-center justify-center bg-surface/40 rounded-[24px] border border-dashed border-border/80 p-6">
               <EmptyState
-                icon={HiSparkles}
+                icon={activeExamBuddyMode ? HiAcademicCap : HiSparkles}
                 title="No more profiles"
-                subtitle="You've seen all available CAs matching your criteria. Check back later or adjust your filters."
+                subtitle={activeExamBuddyMode
+                  ? "You've seen all available Exam Buddy profiles across all genders. Dating swipes do not remove people from this section."
+                  : "You've seen all available dating profiles matching your criteria. Check back later or adjust your filters."}
                 actionText="Adjust Filters"
                 onAction={() => setShowFilters(true)}
                 secondaryActionText="Refresh"

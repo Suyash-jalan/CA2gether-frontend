@@ -18,6 +18,24 @@ import Button from '../components/ui/Button';
 import ToggleSwitch from '../components/ui/ToggleSwitch';
 import Modal from '../components/ui/Modal';
 
+const DISCOVERY_VISIBILITY_OPTIONS = [
+  {
+    value: 'both',
+    label: 'Dating & Exam Buddy',
+    description: 'Show your profile in both discovery sections.',
+  },
+  {
+    value: 'dating',
+    label: 'Dating only',
+    description: 'Hide your profile from Exam Buddy.',
+  },
+  {
+    value: 'exam_buddy',
+    label: 'Exam Buddy only',
+    description: 'Hide your profile from Dating.',
+  },
+];
+
 export default function Settings() {
   const { profile, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +43,7 @@ export default function Settings() {
   // Privacy toggles
   const [anonymousMode, setAnonymousMode] = useState(profile?.anonymousMode ?? false);
   const [examBuddyMode, setExamBuddyMode] = useState(profile?.examBuddyMode ?? false);
+  const [discoveryVisibility, setDiscoveryVisibility] = useState(profile?.discoveryVisibility ?? 'both');
 
   // Notifications toggles
   const [notifMatches, setNotifMatches] = useState(profile?.notificationPreferences?.matches ?? true);
@@ -104,6 +123,22 @@ export default function Settings() {
     }
   };
 
+  const handleDiscoveryVisibility = async (value) => {
+    const previous = discoveryVisibility;
+    setDiscoveryVisibility(value);
+    try {
+      setIsUpdatingPrivacy(true);
+      await profileService.updateMyProfile({ discoveryVisibility: value });
+      await refreshProfile();
+      toast.success('Discovery visibility updated');
+    } catch {
+      setDiscoveryVisibility(previous);
+      toast.error('Failed to save discovery visibility');
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
   const handleDeactivate = async () => {
     try {
       await profileService.deactivateAccount();
@@ -137,6 +172,34 @@ export default function Settings() {
             <h2>Discovery & Visibility</h2>
           </div>
           <div className="space-y-4 pt-2">
+            <div>
+              <p className="text-sm font-semibold text-heading">Show my profile in</p>
+              <p className="text-xs text-muted mt-0.5 mb-3">Choose where other members can discover you.</p>
+              <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Discovery visibility">
+                {DISCOVERY_VISIBILITY_OPTIONS.map((option) => {
+                  const selected = discoveryVisibility === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={isUpdatingPrivacy}
+                      onClick={() => handleDiscoveryVisibility(option.value)}
+                      className={`min-h-24 rounded-2xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                        selected
+                          ? 'border-primary bg-primary/10 text-heading ring-1 ring-primary/30'
+                          : 'border-border bg-background text-heading hover:border-primary/50'
+                      }`}
+                    >
+                      <span className="block text-sm font-semibold">{option.label}</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-muted">{option.description}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <hr className="border-border/60" />
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-heading">Anonymous Mode</p>
