@@ -6,6 +6,7 @@ import {
   HiAdjustmentsHorizontal,
   HiAcademicCap,
   HiSparkles,
+  HiArrowUturnLeft,
 } from 'react-icons/hi2';
 import toast from 'react-hot-toast';
 import { matchService } from '../services/matchService';
@@ -245,21 +246,35 @@ export default function Discovery() {
             onChange={(key) => setExamBuddyMode(key === 'exam_buddy')}
           />
 
-          <motion.button
-            type="button"
-            title="Filter profiles"
-            aria-label="Filter profiles"
-            onClick={() => setShowFilters(!showFilters)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`p-2.5 rounded-full border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-              showFilters || hasActiveFilters
-                ? 'bg-primary text-white border-primary shadow-[0_2px_8px_rgba(217,105,74,0.3)]'
-                : 'bg-surface text-muted hover:text-heading border-border hover:border-primary/40'
-            }`}
-          >
-            <HiAdjustmentsHorizontal size={20} />
-          </motion.button>
+          <div className="flex items-center gap-2">
+            <motion.button
+              type="button"
+              title="View passed profiles"
+              aria-label="View passed profiles"
+              onClick={() => navigate('/matches?tab=passed')}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="h-11 px-3 rounded-full border border-border bg-surface text-muted hover:text-primary hover:border-primary/40 transition-all cursor-pointer flex items-center justify-center gap-1.5 shrink-0 text-xs font-semibold"
+            >
+              <HiArrowUturnLeft size={18} />
+              <span>Passed</span>
+            </motion.button>
+            <motion.button
+              type="button"
+              title="Filter profiles"
+              aria-label="Filter profiles"
+              onClick={() => setShowFilters(!showFilters)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`p-2.5 rounded-full border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                showFilters || hasActiveFilters
+                  ? 'bg-primary text-white border-primary shadow-[0_2px_8px_rgba(217,105,74,0.3)]'
+                  : 'bg-surface text-muted hover:text-heading border-border hover:border-primary/40'
+              }`}
+            >
+              <HiAdjustmentsHorizontal size={20} />
+            </motion.button>
+          </div>
         </div>
 
         {/* Collapsible Filter Drawer */}

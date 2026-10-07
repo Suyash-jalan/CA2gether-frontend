@@ -8,6 +8,8 @@ import {
 } from 'react-icons/hi2';
 import { useAuth } from '../../hooks/useAuth';
 import { notificationService } from '../../services/notificationService';
+import { chatService } from '../../services/chatService';
+import { useSocket } from '../../hooks/useSocket';
 
 const navItems = [
   { to: '/discover', icon: HiSparkles, label: 'Discover' },
@@ -23,8 +25,10 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [unread, setUnread] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [showNotifDot, setShowNotifDot] = useState(false);
   const prevUnread = useRef(0);
+  const { connect } = useSocket();
 
   // Don't render app navbar on public pages (Landing, Login, Signup)
   const isPublicPage = ['/', '/login', '/signup'].includes(location.pathname);
@@ -45,6 +49,25 @@ export default function Navbar() {
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, [user, isPublicPage]);
+
+  useEffect(() => {
+    if (!user || isPublicPage) return;
+    const fetchUnreadMessages = async () => {
+      try {
+        const { data } = await chatService.getUnreadCount();
+        setUnreadMessages(data.count || 0);
+      } catch { /* ignore */ }
+    };
+
+    fetchUnreadMessages();
+    const interval = setInterval(fetchUnreadMessages, 30000);
+    const socket = connect();
+    socket?.on('chat_unread_changed', fetchUnreadMessages);
+    return () => {
+      clearInterval(interval);
+      socket?.off('chat_unread_changed', fetchUnreadMessages);
+    };
+  }, [user, isPublicPage, location.pathname, connect]);
 
   const handleLogout = async () => {
     await logout();
@@ -80,6 +103,11 @@ export default function Navbar() {
                   >
                     <item.icon size={18} className="shrink-0" />
                     <span>{item.label}</span>
+                    {item.to === '/chat' && unreadMessages > 0 && (
+                      <span className="absolute -top-0.5 right-0 min-w-[18px] h-[18px] px-1 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none shadow-sm">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
                     {isActive && (
                       <motion.div
                         layoutId="nav-indicator"
@@ -169,6 +197,11 @@ export default function Navbar() {
                   }`}
                 >
                   <item.icon size={20} />
+                  {item.to === '/chat' && unreadMessages > 0 && (
+                    <span className="absolute top-0.5 right-[22%] min-w-[17px] h-[17px] px-1 bg-error text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {unreadMessages > 9 ? '9+' : unreadMessages}
+                    </span>
+                  )}
                   <span className="text-[11px] mt-0.5 tracking-tight">{item.label}</span>
                   {isActive && (
                     <motion.div

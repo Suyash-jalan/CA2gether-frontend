@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -25,7 +25,9 @@ export default function Matches() {
   const [incomingLikes, setIncomingLikes] = useState([]);
   const [passedProfiles, setPassedProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('dating');
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [tab, setTab] = useState(requestedTab === 'passed' ? 'passed' : 'dating');
   const { user } = useAuth();
   const navigate = useNavigate();
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -114,6 +114,8 @@ export default function Chat() {
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const openedMatchRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -143,20 +145,21 @@ export default function Chat() {
   }, []);
 
   // Fetch match list for the left pane
-  useEffect(() => {
-    const fetchMatches = async () => {
-      setLoadingMatches(true);
-      try {
-        const { data } = await matchService.getMatches();
-        setMatches(data.data || []);
-      } catch {
-        toast.error('Failed to load conversations', { className: 'toast-error' });
-      } finally {
-        setLoadingMatches(false);
-      }
-    };
-    fetchMatches();
+  const fetchMatches = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoadingMatches(true);
+    try {
+      const { data } = await matchService.getMatches();
+      setMatches(data.data || []);
+    } catch {
+      toast.error('Failed to load conversations', { className: 'toast-error' });
+    } finally {
+      if (showLoading) setLoadingMatches(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchMatches();
+  }, [fetchMatches]);
 
   // Active match data
   const activeMatch = useMemo(() => {
@@ -181,6 +184,9 @@ export default function Chat() {
       try {
         const { data } = await chatService.getMessages(matchId, { limit: 50 });
         setMessages(data.data || []);
+        setMatches((current) => current.map((match) => (
+          match._id === matchId ? { ...match, unreadCount: 0 } : match
+        )));
       } catch {
         toast.error('Failed to load messages', { className: 'toast-error' });
       } finally {
@@ -203,7 +209,12 @@ export default function Chat() {
       appendMessage(msg);
       setTyping(false);
       const senderId = msg.sender?._id || msg.sender;
-      if (senderId !== user?.id) socket.emit('mark_read', { matchId });
+      if (senderId !== user?.id) {
+        socket.emit('mark_read', { matchId });
+        setMatches((current) => current.map((match) => (
+          match._id === matchId ? { ...match, unreadCount: 0 } : match
+        )));
+      }
     });
 
     socket.on('messages_read', ({ messageIds = [], readAt }) => {
@@ -213,6 +224,9 @@ export default function Chat() {
       )));
     });
 
+    const handleUnreadChanged = () => fetchMatches(false);
+    socket.on('chat_unread_changed', handleUnreadChanged);
+
     socket.on('user_typing', () => setTyping(true));
     socket.on('user_stop_typing', () => setTyping(false));
     socket.on('error_msg', ({ message }) => toast.error(message, { className: 'toast-error' }));
@@ -221,11 +235,19 @@ export default function Chat() {
       socket.emit('leave_chat', { matchId });
       socket.off('new_message');
       socket.off('messages_read');
+      socket.off('chat_unread_changed', handleUnreadChanged);
       socket.off('user_typing');
       socket.off('user_stop_typing');
       socket.off('error_msg');
     };
-  }, [matchId, connect, appendMessage, user?.id]);
+  }, [matchId, connect, appendMessage, user?.id, fetchMatches]);
+
+  useLayoutEffect(() => {
+    if (loadingMessages || !matchId || openedMatchRef.current === matchId) return;
+    const container = messagesContainerRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
+    openedMatchRef.current = matchId;
+  }, [matchId, loadingMessages, messages.length]);
 
   useEffect(() => {
     scrollToBottom();
@@ -415,11 +437,18 @@ export default function Chat() {
                         <p className="text-xs text-muted truncate">
                           {partner.caStatus || 'Chartered Accountant'}
                         </p>
-                        {m.mode === 'exam_buddy' && (
-                          <span className="text-[9px] font-semibold text-success bg-success/15 px-1.5 py-0.2 rounded-full">
-                            Study
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {m.mode === 'exam_buddy' && (
+                            <span className="text-[9px] font-semibold text-success bg-success/15 px-1.5 py-0.2 rounded-full">
+                              Study
+                            </span>
+                          )}
+                          {m.unreadCount > 0 && !isSelected && (
+                            <span className="min-w-[19px] h-[19px] px-1.5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">
+                              {m.unreadCount > 9 ? '9+' : m.unreadCount}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -503,7 +532,7 @@ export default function Chat() {
               </div>
 
               {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3.5">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-3.5">
                 {loadingMessages ? (
                   <SkeletonLoader type="chat" count={5} />
                 ) : messages.length === 0 ? (
