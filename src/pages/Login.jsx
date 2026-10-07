@@ -41,7 +41,10 @@ export default function Login() {
     setLoading(true);
     try {
       await login({ email: email.trim(), password }, rememberMe);
-      toast.success('Welcome back to CA2gether!', { className: 'toast-success' });
+      toast.success('Welcome back to CA2gether!', {
+        duration: 1500,
+        className: 'toast-success',
+      });
       navigate('/discover');
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
