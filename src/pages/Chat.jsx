@@ -72,7 +72,7 @@ function MessageBubble({ message, isOwn, index }) {
         )}
         {message.content && <p className="whitespace-pre-wrap break-words">{message.content}</p>}
         <div
-          className={`text-[10px] mt-1 text-right font-medium ${
+          className={`text-[10px] mt-1 flex items-center justify-end gap-1 font-medium ${
             isOwn ? 'text-white/70' : 'text-muted'
           }`}
         >
@@ -80,6 +80,15 @@ function MessageBubble({ message, isOwn, index }) {
             hour: '2-digit',
             minute: '2-digit',
           })}
+          {isOwn && !message.pendingUpload && (
+            <span
+              title={message.readAt ? 'Read' : 'Sent'}
+              aria-label={message.readAt ? 'Read' : 'Sent'}
+              className={message.readAt ? 'font-bold text-sky-300 tracking-[-0.18em] pr-0.5' : 'text-white/75'}
+            >
+              {message.readAt ? '✓✓' : '✓'}
+            </span>
+          )}
         </div>
       </div>
     </motion.div>
@@ -193,6 +202,15 @@ export default function Chat() {
     socket.on('new_message', (msg) => {
       appendMessage(msg);
       setTyping(false);
+      const senderId = msg.sender?._id || msg.sender;
+      if (senderId !== user?.id) socket.emit('mark_read', { matchId });
+    });
+
+    socket.on('messages_read', ({ messageIds = [], readAt }) => {
+      const readIds = new Set(messageIds);
+      setMessages((current) => current.map((message) => (
+        readIds.has(message._id) ? { ...message, readAt } : message
+      )));
     });
 
     socket.on('user_typing', () => setTyping(true));
@@ -202,11 +220,12 @@ export default function Chat() {
     return () => {
       socket.emit('leave_chat', { matchId });
       socket.off('new_message');
+      socket.off('messages_read');
       socket.off('user_typing');
       socket.off('user_stop_typing');
       socket.off('error_msg');
     };
-  }, [matchId, connect, appendMessage]);
+  }, [matchId, connect, appendMessage, user?.id]);
 
   useEffect(() => {
     scrollToBottom();

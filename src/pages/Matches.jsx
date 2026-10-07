@@ -8,6 +8,7 @@ import {
   HiXMark,
   HiAcademicCap,
   HiUserPlus,
+  HiArrowUturnLeft,
 } from 'react-icons/hi2';
 import { matchService } from '../services/matchService';
 import { useAuth } from '../hooks/useAuth';
@@ -22,6 +23,7 @@ import { resolveMediaUrl } from '../utils/media';
 export default function Matches() {
   const [matches, setMatches] = useState([]);
   const [incomingLikes, setIncomingLikes] = useState([]);
+  const [passedProfiles, setPassedProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('dating');
   const { user } = useAuth();
@@ -34,6 +36,9 @@ export default function Matches() {
         if (tab === 'likes') {
           const { data } = await matchService.getIncomingLikes({ mode: 'dating' });
           setIncomingLikes(data.data || []);
+        } else if (tab === 'passed') {
+          const { data } = await matchService.getPassedProfiles();
+          setPassedProfiles(data.data || []);
         } else {
           const { data } = await matchService.getMatches({ mode: tab });
           setMatches(data.data || []);
@@ -55,6 +60,16 @@ export default function Matches() {
       toast.success('Unmatched successfully', { className: 'toast-success' });
     } catch {
       toast.error('Failed to unmatch', { className: 'toast-error' });
+    }
+  };
+
+  const handleRestoreProfile = async (entry) => {
+    try {
+      await matchService.restorePassedProfile(entry.user._id, entry.mode);
+      setPassedProfiles((current) => current.filter((item) => item._id !== entry._id));
+      toast.success('Profile will appear in Discover again', { className: 'toast-success' });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Could not restore this profile', { className: 'toast-error' });
     }
   };
 
@@ -83,6 +98,7 @@ export default function Matches() {
     { key: 'dating', label: 'Dating Matches', icon: HiHeart },
     { key: 'likes', label: 'Likes You', icon: HiUserPlus, badge: incomingLikes.length || undefined },
     { key: 'exam_buddy', label: 'Exam Buddies', icon: HiAcademicCap },
+    { key: 'passed', label: 'Passed Profiles', icon: HiArrowUturnLeft },
   ];
 
   return (
@@ -141,6 +157,45 @@ export default function Matches() {
                       <Button onClick={() => handleLikeRequest(request, 'like')}><HiHeart size={17} className="mr-1.5 inline" />Accept</Button>
                     </div>
                   </Card>
+                );
+              })}
+            </div>
+          )
+        ) : tab === 'passed' ? (
+          passedProfiles.length === 0 ? (
+            <div className="bg-surface/50 rounded-3xl border border-dashed border-border/80 p-8 sm:p-12 my-6">
+              <EmptyState
+                icon={HiArrowUturnLeft}
+                title="No passed profiles"
+                subtitle="Profiles you pass will appear here so you can reconsider them later."
+                actionText="Explore Discover"
+                onAction={() => navigate('/discover')}
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {passedProfiles.map((entry, i) => {
+                const person = entry.user || {};
+                return (
+                  <motion.div key={entry._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                    <Card className="p-5 h-full flex flex-col">
+                      <div className="flex items-start gap-4">
+                        <button type="button" onClick={() => navigate(`/profile/${person._id}`)} className="w-16 h-16 rounded-2xl bg-primary/10 overflow-hidden shrink-0">
+                          {person.photos?.[0] ? <img src={resolveMediaUrl(person.photos[0])} alt={person.name} className="w-full h-full object-cover" /> : <span className="w-full h-full flex items-center justify-center text-primary font-serif font-bold text-xl">{person.name?.[0] || 'CA'}</span>}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <button type="button" onClick={() => navigate(`/profile/${person._id}`)} className="font-serif font-bold text-lg text-heading hover:text-primary">{person.name || 'CA member'}</button>
+                          <p className="text-sm text-muted">{[person.caStatus, person.city].filter(Boolean).join(' · ')}</p>
+                          <span className="inline-block mt-2 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                            {entry.mode === 'exam_buddy' ? 'Exam Buddy' : 'Dating'}
+                          </span>
+                        </div>
+                      </div>
+                      <Button className="mt-5 w-full" variant="secondary" onClick={() => handleRestoreProfile(entry)}>
+                        <HiArrowUturnLeft size={17} className="mr-1.5 inline" />Show again in Discover
+                      </Button>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
