@@ -17,6 +17,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import ToggleSwitch from '../components/ui/ToggleSwitch';
 import Modal from '../components/ui/Modal';
+import Input from '../components/ui/Input';
 
 const DISCOVERY_VISIBILITY_OPTIONS = [
   {
@@ -47,7 +48,6 @@ export default function Settings() {
 
   // Notifications toggles
   const [notifMatches, setNotifMatches] = useState(profile?.notificationPreferences?.matches ?? true);
-  const [notifMessages, setNotifMessages] = useState(profile?.notificationPreferences?.messages ?? true);
   const [notifLounge, setNotifLounge] = useState(profile?.notificationPreferences?.lounge ?? true);
 
   // Blocked users
@@ -56,6 +56,10 @@ export default function Settings() {
 
   // Modals
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
 
   useEffect(() => {
@@ -107,9 +111,8 @@ export default function Settings() {
   };
 
   const handleNotificationToggle = async (key, value) => {
-    const next = { matches: notifMatches, messages: notifMessages, lounge: notifLounge, [key]: value };
+    const next = { matches: notifMatches, lounge: notifLounge, [key]: value };
     if (key === 'matches') setNotifMatches(value);
-    if (key === 'messages') setNotifMessages(value);
     if (key === 'lounge') setNotifLounge(value);
     try {
       await profileService.updateMyProfile({ notificationPreferences: next });
@@ -117,7 +120,6 @@ export default function Settings() {
       toast.success('Notification preferences updated');
     } catch {
       if (key === 'matches') setNotifMatches(!value);
-      if (key === 'messages') setNotifMessages(!value);
       if (key === 'lounge') setNotifLounge(!value);
       toast.error('Failed to save notification preference');
     }
@@ -147,6 +149,30 @@ export default function Settings() {
       navigate('/login');
     } catch {
       toast.error('Failed to deactivate account');
+    }
+  };
+
+  const closeDeleteModal = () => {
+    if (deletingAccount) return;
+    setShowDeleteModal(false);
+    setDeletePassword('');
+    setDeleteConfirmation('');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword || deleteConfirmation !== 'DELETE') return;
+    try {
+      setDeletingAccount(true);
+      await profileService.deleteAccount({
+        password: deletePassword,
+        confirmation: deleteConfirmation,
+      });
+      toast.success('Your account has been permanently deleted');
+      await logout();
+      navigate('/');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete account');
+      setDeletingAccount(false);
     }
   };
 
@@ -243,14 +269,6 @@ export default function Settings() {
             <hr className="border-border/60" />
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-heading">Direct Messages</p>
-                <p className="text-xs text-muted">Get notified on incoming chats</p>
-              </div>
-              <ToggleSwitch checked={notifMessages} onChange={(value) => handleNotificationToggle('messages', value)} label="Direct messages" />
-            </div>
-            <hr className="border-border/60" />
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm font-semibold text-heading">CA Lounge & Event Updates</p>
                 <p className="text-xs text-muted">Replies to your posts, discussions, or event invites</p>
               </div>
@@ -313,6 +331,13 @@ export default function Settings() {
               <HiUserMinus size={18} /> Deactivate Account
             </Button>
             <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(true)}
+              className="text-error border-error/50 hover:bg-error/10"
+            >
+              <HiTrash size={18} /> Delete Permanently
+            </Button>
+            <Button
               variant="secondary"
               onClick={async () => {
                 await logout();
@@ -340,6 +365,52 @@ export default function Settings() {
               </Button>
               <Button variant="primary" onClick={handleDeactivate} className="bg-error hover:bg-error/90 text-white">
                 Yes, Deactivate
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        <Modal
+          isOpen={showDeleteModal}
+          onClose={closeDeleteModal}
+          title="Permanently delete account?"
+        >
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-error/30 bg-error/5 p-4">
+              <p className="text-sm font-semibold text-error">This action cannot be undone.</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
+                Your profile, matches, messages, posts, comments, uploaded photos, and other account data will be permanently removed.
+              </p>
+            </div>
+            <Input
+              id="delete-password"
+              label="Current password"
+              type="password"
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              placeholder="Enter your current password"
+              autoComplete="current-password"
+            />
+            <Input
+              id="delete-confirmation"
+              label="Type DELETE to confirm"
+              value={deleteConfirmation}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              placeholder="DELETE"
+              autoComplete="off"
+            />
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={closeDeleteModal} disabled={deletingAccount}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleDeleteAccount}
+                loading={deletingAccount}
+                disabled={!deletePassword || deleteConfirmation !== 'DELETE' || deletingAccount}
+                className="bg-error hover:bg-error/90 text-white"
+              >
+                Delete my account
               </Button>
             </div>
           </div>

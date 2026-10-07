@@ -21,13 +21,14 @@ import EmptyState from '../components/ui/EmptyState';
 import SegmentedTabs from '../components/ui/SegmentedTabs';
 import PageTransition from '../components/layout/PageTransition';
 import ScrollToTop from '../components/ui/ScrollToTop';
+import { FORUM_TAGS } from '../constants/forumTags';
 
 const TABS = [
   { key: 'all', label: 'All Discussions', icon: HiChatBubbleLeftEllipsis },
   { key: 'events', label: 'Community Events', icon: HiCalendarDays },
 ];
 
-const POPULAR_TAGS = ['All', 'Audit', 'Tax', 'DirectTax', 'Big4', 'Articleship', 'Valuation', 'WorkLife', 'ExamBuddy'];
+const POPULAR_TAGS = ['All', ...FORUM_TAGS];
 
 function formatDate(dateString) {
   if (!dateString) return '';

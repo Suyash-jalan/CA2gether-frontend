@@ -202,6 +202,7 @@ export default function Discovery() {
         mode: activeExamBuddyMode ? 'exam_buddy' : 'dating',
       });
       if (data.matched) setMatchModal(true);
+      else if (action === 'like') toast.success('Like sent', { className: 'toast-success' });
 
       // Refill quietly before the user reaches the end of the current deck.
       if (remainingUsers.length <= 3) await fetchUsers({ showLoader: false });

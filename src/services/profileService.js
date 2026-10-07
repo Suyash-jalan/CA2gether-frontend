@@ -15,4 +15,5 @@ export const profileService = {
   getUserProfile: (id) => api.get(`/users/${id}`),
   deactivateAccount: () => api.post('/users/me/deactivate'),
   reactivateAccount: () => api.post('/users/me/reactivate'),
+  deleteAccount: (data) => api.delete('/users/me', { data }),
 };

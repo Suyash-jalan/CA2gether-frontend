@@ -19,17 +19,20 @@ import EmptyState from '../components/ui/EmptyState';
 import SegmentedTabs from '../components/ui/SegmentedTabs';
 import PageTransition from '../components/layout/PageTransition';
 import { resolveMediaUrl } from '../utils/media';
+import { useSocket } from '../hooks/useSocket';
 
 export default function Matches() {
   const [matches, setMatches] = useState([]);
   const [incomingLikes, setIncomingLikes] = useState([]);
   const [passedProfiles, setPassedProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [likesRefresh, setLikesRefresh] = useState(0);
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const [tab, setTab] = useState(requestedTab === 'passed' ? 'passed' : 'dating');
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { connect } = useSocket();
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -39,11 +42,19 @@ export default function Matches() {
           const { data } = await matchService.getIncomingLikes({ mode: 'dating' });
           setIncomingLikes(data.data || []);
         } else if (tab === 'passed') {
-          const { data } = await matchService.getPassedProfiles();
+          const [{ data }, likesResponse] = await Promise.all([
+            matchService.getPassedProfiles(),
+            matchService.getIncomingLikes({ mode: 'dating' }),
+          ]);
           setPassedProfiles(data.data || []);
+          setIncomingLikes(likesResponse.data.data || []);
         } else {
-          const { data } = await matchService.getMatches({ mode: tab });
+          const [{ data }, likesResponse] = await Promise.all([
+            matchService.getMatches({ mode: tab }),
+            matchService.getIncomingLikes({ mode: 'dating' }),
+          ]);
           setMatches(data.data || []);
+          setIncomingLikes(likesResponse.data.data || []);
         }
       } catch {
         toast.error('Failed to load matches', { className: 'toast-error' });
@@ -52,6 +63,22 @@ export default function Matches() {
       }
     };
     fetchMatches();
+  }, [tab, likesRefresh]);
+
+  useEffect(() => {
+    const socket = connect();
+    if (!socket) return;
+    const handleIncomingLike = ({ mode } = {}) => {
+      if (!mode || mode === 'dating') setLikesRefresh((value) => value + 1);
+    };
+    socket.on('incoming_like', handleIncomingLike);
+    return () => socket.off('incoming_like', handleIncomingLike);
+  }, [connect]);
+
+  useEffect(() => {
+    if (tab !== 'likes') return;
+    const interval = setInterval(() => setLikesRefresh((value) => value + 1), 15000);
+    return () => clearInterval(interval);
   }, [tab]);
 
   const handleUnmatch = async (e, matchId) => {
