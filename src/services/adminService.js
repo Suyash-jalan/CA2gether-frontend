@@ -1,6 +1,7 @@
 import api from './api';
 
 export const adminService = {
+  getDashboardStats: () => api.get('/admin/stats'),
   getPendingVerifications: (params) => api.get('/admin/verifications', { params }),
   getVerificationDetail: (userId) => api.get(`/admin/verifications/${userId}`),
   getVerificationDocument: (userId) => api.get(`/admin/verifications/${userId}/document`, { responseType: 'blob' }),

@@ -25,6 +25,7 @@ export default function Admin() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('verifications'); // 'verifications' | 'reports' | 'flagged' | 'logs'
   const [loading, setLoading] = useState(false);
+  const [totalAccounts, setTotalAccounts] = useState(null);
 
   // Verifications
   const [verifications, setVerifications] = useState([]);
@@ -43,6 +44,12 @@ export default function Admin() {
 
   // Audit Logs
   const [auditLogs, setAuditLogs] = useState([]);
+
+  useEffect(() => {
+    adminService.getDashboardStats()
+      .then(({ data }) => setTotalAccounts(data.data?.totalAccounts ?? 0))
+      .catch(() => setTotalAccounts(null));
+  }, []);
 
   const loadTabData = useCallback(async () => {
     setLoading(true);
@@ -150,6 +157,18 @@ export default function Admin() {
             </div>
           </div>
         </div>
+
+        <Card className="flex items-center gap-4 border border-border bg-surface p-5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <HiUserGroup size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Total accounts</p>
+            <p className="mt-1 text-3xl font-serif font-bold text-heading">
+              {totalAccounts === null ? '—' : totalAccounts.toLocaleString()}
+            </p>
+          </div>
+        </Card>
 
         {/* Tab switcher */}
         <div className="flex gap-2 p-1.5 bg-surface rounded-2xl border border-border overflow-x-auto">
