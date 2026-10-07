@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuthContext } from './context/AuthContext';
@@ -6,30 +7,30 @@ import Navbar from './components/layout/Navbar';
 import ScrollToTop from './components/ui/ScrollToTop';
 
 // Pages
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import ProfileSetup from './pages/ProfileSetup';
-import Discovery from './pages/Discovery';
-import Matches from './pages/Matches';
-import Chat from './pages/Chat';
-import Lounge from './pages/Lounge';
-import CreatePost from './pages/CreatePost';
-import CreateEvent from './pages/CreateEvent';
-import PostDetail from './pages/PostDetail';
-import Profile from './pages/Profile';
-import MemberProfile from './pages/MemberProfile';
-import ProfileEdit from './pages/ProfileEdit';
-import Verification from './pages/Verification';
-import Settings from './pages/Settings';
-import Notifications from './pages/Notifications';
-import Admin from './pages/Admin';
-import NotFound from './pages/NotFound';
-import Legal from './pages/Legal';
-import VerifyEmail from './pages/VerifyEmail';
-import ResetPassword from './pages/ResetPassword';
-import News from './pages/News';
-import NewsDetail from './pages/NewsDetail';
+const Landing = lazy(() => import('./pages/Landing'));
+const Login = lazy(() => import('./pages/Login'));
+const Signup = lazy(() => import('./pages/Signup'));
+const ProfileSetup = lazy(() => import('./pages/ProfileSetup'));
+const Discovery = lazy(() => import('./pages/Discovery'));
+const Matches = lazy(() => import('./pages/Matches'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Lounge = lazy(() => import('./pages/Lounge'));
+const CreatePost = lazy(() => import('./pages/CreatePost'));
+const CreateEvent = lazy(() => import('./pages/CreateEvent'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
+const Profile = lazy(() => import('./pages/Profile'));
+const MemberProfile = lazy(() => import('./pages/MemberProfile'));
+const ProfileEdit = lazy(() => import('./pages/ProfileEdit'));
+const Verification = lazy(() => import('./pages/Verification'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Admin = lazy(() => import('./pages/Admin'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Legal = lazy(() => import('./pages/Legal'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const News = lazy(() => import('./pages/News'));
+const NewsDetail = lazy(() => import('./pages/NewsDetail'));
 
 function LoadingScreen() {
   return (
@@ -66,6 +67,7 @@ function AppRoutes() {
   return (
     <>
       <Navbar />
+      <Suspense fallback={<LoadingScreen />}>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
@@ -243,6 +245,7 @@ function AppRoutes() {
         {/* Fallback */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </Suspense>
       <ScrollToTop />
     </>
   );
