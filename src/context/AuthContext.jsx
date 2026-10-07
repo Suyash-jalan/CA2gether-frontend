@@ -60,6 +60,32 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const storeSession = async (data, remember = true) => {
+    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
+    (remember ? localStorage : sessionStorage).setItem('accessToken', data.accessToken);
+    setUser(data.user);
+    try {
+      const profileRes = await profileService.getMyProfile();
+      setProfile(profileRes.data.user);
+    } catch {
+      setProfile(null);
+    }
+    return data;
+  };
+
+  const googleLogin = async (credential, remember = true) => {
+    const { data } = await authService.googleLogin(credential);
+    if (!data.needsRegistration) await storeSession(data, remember);
+    return data;
+  };
+
+  const googleSignup = async (registration) => {
+    const { data } = await authService.googleSignup(registration);
+    await storeSession(data, true);
+    return data;
+  };
+
   const logout = async () => {
     try {
       await authService.logout();
@@ -87,6 +113,8 @@ export function AuthProvider({ children }) {
     loading,
     login,
     signup,
+    googleLogin,
+    googleSignup,
     logout,
     refreshProfile,
     setUser,

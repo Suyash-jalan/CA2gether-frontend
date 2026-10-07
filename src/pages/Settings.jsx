@@ -38,7 +38,7 @@ const DISCOVERY_VISIBILITY_OPTIONS = [
 ];
 
 export default function Settings() {
-  const { profile, logout, refreshProfile } = useAuth();
+  const { user, profile, logout, refreshProfile } = useAuth();
   const navigate = useNavigate();
 
   // Privacy toggles
@@ -160,7 +160,8 @@ export default function Settings() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!deletePassword || deleteConfirmation !== 'DELETE') return;
+    const googleOnlyAccount = user?.authProvider === 'google';
+    if ((!googleOnlyAccount && !deletePassword) || deleteConfirmation !== 'DELETE') return;
     try {
       setDeletingAccount(true);
       await profileService.deleteAccount({
@@ -382,7 +383,7 @@ export default function Settings() {
                 Your profile, matches, messages, posts, comments, uploaded photos, and other account data will be permanently removed.
               </p>
             </div>
-            <Input
+            {user?.authProvider !== 'google' && <Input
               id="delete-password"
               label="Current password"
               type="password"
@@ -390,7 +391,7 @@ export default function Settings() {
               onChange={(event) => setDeletePassword(event.target.value)}
               placeholder="Enter your current password"
               autoComplete="current-password"
-            />
+            />}
             <Input
               id="delete-confirmation"
               label="Type DELETE to confirm"
@@ -407,7 +408,7 @@ export default function Settings() {
                 variant="primary"
                 onClick={handleDeleteAccount}
                 loading={deletingAccount}
-                disabled={!deletePassword || deleteConfirmation !== 'DELETE' || deletingAccount}
+                disabled={(user?.authProvider !== 'google' && !deletePassword) || deleteConfirmation !== 'DELETE' || deletingAccount}
                 className="bg-error hover:bg-error/90 text-white"
               >
                 Delete my account

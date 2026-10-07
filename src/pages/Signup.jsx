@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
@@ -18,6 +18,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import BirthDateInput from '../components/ui/BirthDateInput';
 import AuthLayout from '../components/layout/AuthLayout';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 const CA_STATUSES = [
   { value: 'CA Foundation', label: 'Foundation Student' },
@@ -44,9 +45,20 @@ export default function Signup() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
+  const [googleCredential, setGoogleCredential] = useState(() => sessionStorage.getItem('googleSignupCredential') || '');
 
-  const { signup } = useAuth();
+  const { signup, googleLogin, googleSignup } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!googleCredential) return;
+    try {
+      const profile = JSON.parse(sessionStorage.getItem('googleSignupProfile') || '{}');
+      setForm((current) => ({ ...current, name: profile.name || current.name, email: profile.email || current.email }));
+    } catch {
+      sessionStorage.removeItem('googleSignupProfile');
+    }
+  }, [googleCredential]);
 
   const set = (field) => (e) => {
     setForm({ ...form, [field]: e.target.value });
@@ -85,17 +97,18 @@ export default function Signup() {
       errs.icaiRegNumber = 'Enter a valid CA registration or membership number';
     }
 
-    // Password policy
-    if (form.password.length < 8) {
-      errs.password = 'Must be at least 8 characters';
-    } else if (!/\d/.test(form.password)) {
-      errs.password = 'Must contain at least one number';
-    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(form.password)) {
-      errs.password = 'Must contain a special character (e.g. @, #, $, !)';
-    }
+    if (!googleCredential) {
+      if (form.password.length < 8) {
+        errs.password = 'Must be at least 8 characters';
+      } else if (!/\d/.test(form.password)) {
+        errs.password = 'Must contain at least one number';
+      } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(form.password)) {
+        errs.password = 'Must contain a special character (e.g. @, #, $, !)';
+      }
 
-    if (form.password !== form.confirmPassword) {
-      errs.confirmPassword = 'Passwords do not match';
+      if (form.password !== form.confirmPassword) {
+        errs.confirmPassword = 'Passwords do not match';
+      }
     }
 
     // 18+ check
@@ -118,6 +131,27 @@ export default function Signup() {
     return Object.keys(errs).length === 0;
   };
 
+  const handleGoogleCredential = async (credential) => {
+    setLoading(true);
+    try {
+      const data = await googleLogin(credential, true);
+      if (!data.needsRegistration) {
+        toast.success('Welcome back to CA2gether!', { duration: 1500, className: 'toast-success' });
+        navigate('/discover');
+        return;
+      }
+      sessionStorage.setItem('googleSignupCredential', credential);
+      sessionStorage.setItem('googleSignupProfile', JSON.stringify(data.profile || {}));
+      setGoogleCredential(credential);
+      setForm((current) => ({ ...current, name: data.profile?.name || '', email: data.profile?.email || '' }));
+      toast.success('Google email verified. Complete your CA profile.', { className: 'toast-success' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Google sign-in failed. Please try again.', { className: 'toast-error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) {
@@ -131,15 +165,20 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      await signup({
+      const registration = {
         name: form.name.trim(),
-        email: form.email.trim(),
-        password: form.password,
         dateOfBirth: form.dob,
         gender: form.gender,
         caStatus: form.caStatus,
         icaiRegNumber: form.icaiRegNumber.trim().toUpperCase(),
-      });
+      };
+      if (googleCredential) {
+        await googleSignup({ ...registration, credential: googleCredential });
+        sessionStorage.removeItem('googleSignupCredential');
+        sessionStorage.removeItem('googleSignupProfile');
+      } else {
+        await signup({ ...registration, email: form.email.trim(), password: form.password });
+      }
       toast.success('Account created successfully! Welcome to CA2gether.', { className: 'toast-success' });
       navigate('/profile-setup');
     } catch (err) {
@@ -157,6 +196,25 @@ export default function Signup() {
       activeTab="signup"
       maxWidth="max-w-[580px]"
     >
+      {!googleCredential && (
+        <>
+          <div className="mb-5 flex justify-center">
+            <GoogleSignInButton onCredential={handleGoogleCredential} disabled={loading} text="signup_with" />
+          </div>
+          {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+            <div className="mb-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <span className="h-px flex-1 bg-border" />
+              <span>or register with email</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          )}
+        </>
+      )}
+      {googleCredential && (
+        <div className="mb-5 rounded-2xl border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-4 py-3 text-sm text-heading">
+          <span className="font-semibold">Google email verified:</span> {form.email}
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Name and Email 2-column on larger screens */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -185,6 +243,7 @@ export default function Signup() {
             error={touched.email ? errors.email : ''}
             required
             autoComplete="email"
+            disabled={Boolean(googleCredential)}
           />
         </div>
 
@@ -258,6 +317,7 @@ export default function Signup() {
           />
         </div>
 
+        {!googleCredential && <>
         {/* Password & Confirm Password */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
@@ -368,6 +428,7 @@ export default function Signup() {
             </div>
           </div>
         </div>
+        </>}
 
         {/* Terms agreement checkbox */}
         <div className="pt-1">

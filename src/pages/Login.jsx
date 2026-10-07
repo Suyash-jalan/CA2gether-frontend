@@ -16,6 +16,7 @@ import { authService } from '../services/authService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import AuthLayout from '../components/layout/AuthLayout';
+import GoogleSignInButton from '../components/auth/GoogleSignInButton';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -28,7 +29,7 @@ export default function Login() {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [developmentResetUrl, setDevelopmentResetUrl] = useState('');
 
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -49,6 +50,25 @@ export default function Login() {
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed. Please check your credentials.';
       toast.error(msg, { className: 'toast-error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async (credential) => {
+    setLoading(true);
+    try {
+      const data = await googleLogin(credential, rememberMe);
+      if (data.needsRegistration) {
+        sessionStorage.setItem('googleSignupCredential', credential);
+        sessionStorage.setItem('googleSignupProfile', JSON.stringify(data.profile || {}));
+        navigate('/signup');
+        return;
+      }
+      toast.success('Welcome back to CA2gether!', { duration: 1500, className: 'toast-success' });
+      navigate('/discover');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Google sign-in failed. Please try again.', { className: 'toast-error' });
     } finally {
       setLoading(false);
     }
@@ -88,6 +108,16 @@ export default function Login() {
       activeTab="login"
       maxWidth="max-w-[460px]"
     >
+      <div className="mb-5 flex justify-center">
+        <GoogleSignInButton onCredential={handleGoogleSignIn} disabled={loading} />
+      </div>
+      {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+        <div className="mb-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          <span className="h-px flex-1 bg-border" />
+          <span>or use email</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Input
           label="Email Address"
