@@ -21,12 +21,22 @@ import PageTransition from '../components/layout/PageTransition';
 import { resolveMediaUrl } from '../utils/media';
 import { useSocket } from '../hooks/useSocket';
 
+const formatTimeRemaining = (expiresAt, now) => {
+  const remainingMs = new Date(expiresAt).getTime() - now;
+  if (remainingMs <= 0) return 'Expiring now';
+
+  const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+  const minutes = Math.max(1, Math.ceil((remainingMs % (60 * 60 * 1000)) / (60 * 1000)));
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
+
 export default function Matches() {
   const [matches, setMatches] = useState([]);
   const [incomingLikes, setIncomingLikes] = useState([]);
   const [passedProfiles, setPassedProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [likesRefresh, setLikesRefresh] = useState(0);
+  const [passedClock, setPassedClock] = useState(0);
   const [searchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const [tab, setTab] = useState(requestedTab === 'passed' ? 'passed' : 'dating');
@@ -78,6 +88,22 @@ export default function Matches() {
   useEffect(() => {
     if (tab !== 'likes') return;
     const interval = setInterval(() => setLikesRefresh((value) => value + 1), 15000);
+    return () => clearInterval(interval);
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== 'passed') return;
+
+    const removeExpiredFromView = () => {
+      const now = Date.now();
+      setPassedClock(now);
+      setPassedProfiles((current) => current.filter(
+        (entry) => !entry.expiresAt || new Date(entry.expiresAt).getTime() > now
+      ));
+    };
+
+    removeExpiredFromView();
+    const interval = setInterval(removeExpiredFromView, 30000);
     return () => clearInterval(interval);
   }, [tab]);
 
@@ -218,6 +244,11 @@ export default function Matches() {
                           <span className="inline-block mt-2 text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
                             {entry.mode === 'exam_buddy' ? 'Exam Buddy' : 'Dating'}
                           </span>
+                          {entry.expiresAt && (
+                            <p className="mt-2 text-xs text-muted">
+                              Removed automatically in {formatTimeRemaining(entry.expiresAt, passedClock)}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <Button className="mt-5 w-full" variant="secondary" onClick={() => handleRestoreProfile(entry)}>
